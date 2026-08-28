@@ -1,3 +1,9 @@
+// Copyright (c) 2025-2026 Stefan Teleman.
+//
+// Licensed under the MIT License.
+// See https://opensource.org/license/mit
+// SPDX-License-Identifier: MIT
+
 // ecmcgbnprimefactorsmpi — distributed GPU trial-division prime factorization.
 //
 // A CUDA + CGBN counterpart to cgbnprimefactors.cu with a different strategy: it

@@ -1,3 +1,9 @@
+// Copyright (c) 2024-2026 Stefan Teleman.
+//
+// Licensed under the MIT License.
+// See https://opensource.org/license/mit
+// SPDX-License-Identifier: MIT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

@@ -1,3 +1,9 @@
+// Copyright (c) 2025-2026 Stefan Teleman.
+//
+// Licensed under the MIT License.
+// See https://opensource.org/license/mit
+// SPDX-License-Identifier: MIT
+
 // cgbnprimefactors — GPU prime factorization using NVIDIA CGBN.
 //
 // A CUDA counterpart to the CPU `primefactors` program. It prints the DISTINCT
