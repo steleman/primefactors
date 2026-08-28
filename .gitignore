@@ -1,0 +1,8 @@
+# Build artifacts
+*.o
+*.orig
+*.bak
+primefactors
+cgbnprimefactors
+ecmcgbnprimefactorsmpi
+
