@@ -223,3 +223,11 @@ For real speed on single-node large factors, the CPU GMP-ECM path (`primefactors
 
 The MPI workload distribution can definitely be improved. I'm thinking of a number of things to do next.
 
+## License
+
+MIT - see [LICENSE](LICENSE), which is the verbatim MIT License text.
+Copyright (C) 2019 - 2026 Stefan Teleman.
+
+## AI
+I used Claude Opus 5.0 for Pollard's rho and to test / verify / find bugs.
+
