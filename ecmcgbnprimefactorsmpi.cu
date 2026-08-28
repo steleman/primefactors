@@ -413,24 +413,64 @@ static void factor_residual(const mpz_t n) {
   mpz_clear(q);
 }
 
+static void print_help() {
+  (void) std::fprintf(stderr,
+                      "Usage: ecmcgbnprimefactorsmpi -f <input-file> "
+                      "-N <unsigned-integer-to-factorize>\n"
+                      "                             "
+                      "[-t <number-of-threads>]\n"
+                      "                             "
+                      "[(default: sysconf(_SC_NPROCESSORS_ONLN) - 1)]\n");
+}
+
 int main(int argc, char* const argv[])
 {
+  bool ph = false;
+  int opt;
+  const char* filename = NULL;
+  const char* NS = NULL;
+  int32_t nthreads = (int32_t) sysconf(_SC_NPROCESSORS_ONLN) - 1;
+
   MPI_Init(&argc, (char***) &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_nranks);
 
-  if (argc < 3 || argc > 4) {
+  while ((opt = getopt(argc, argv, "hf:t:N:")) != -1) {
+    switch (opt) {
+      case 'h':
+        ph = true;
+        break;
+      case 'f':
+        filename = optarg;
+        break;
+      case 't':
+        nthreads = (int32_t) strtol(optarg, NULL, 10);
+        break;
+      case 'N':
+        NS = optarg;
+        break;
+      default:
+        ph = true;
+        break;
+    }
+  }
+
+  if (ph) {
     if (mpi_rank == 0)
-      fprintf(stderr,
-              "Usage: ecmcgbnprimefactorsmpi <primes-file> <N> [threads]\n");
+      print_help();
+
+    MPI_Finalize();
+    return 0;
+  }
+
+  if (!filename || !NS) {
+    if (mpi_rank == 0)
+      print_help();
+
     MPI_Finalize();
     return 1;
   }
 
-  const char* primes_path = argv[1];
-  const char* NS          = argv[2];
-  int32_t nthreads = (argc == 4)  ? atoi(argv[3])
-                                  : (int32_t) sysconf(_SC_NPROCESSORS_ONLN);
   if (nthreads < 1)
     nthreads = 1;
 
@@ -439,7 +479,7 @@ int main(int argc, char* const argv[])
   BN N = bn_from_dec(NS);
   if (bn_bitlen(N) > MAXBITS - 16) {
     if (mpi_rank == 0)
-      fprintf(stderr, "error: N too large for the %d-bit CGBN width\n", MAXBITS);
+      fprintf(stderr, "error: N too large for the %i-bit CGBN width\n", MAXBITS);
     MPI_Finalize();
     return 1;
   }
@@ -486,13 +526,14 @@ int main(int argc, char* const argv[])
   // rank reads the whole file but retains only its interval's divisors.
   std::vector<BN> primes;
   {
-    std::ifstream in(primes_path);
+    std::ifstream in(filename);
     if (!in) {
       if (mpi_rank == 0)
-        fprintf(stderr, "error: cannot open primes file '%s'\n", primes_path);
+        fprintf(stderr, "error: cannot open primes file '%s'\n", filename);
       MPI_Finalize();
       return 1;
     }
+
     std::string tok;
     BN two = bn_from_dec("2");
     while (in >> tok) {
@@ -518,6 +559,7 @@ int main(int argc, char* const argv[])
 
   std::vector<BN> all;
   std::vector<int> bytecounts, displs;
+
   if (mpi_rank == 0) {
     bytecounts.resize(mpi_nranks);
     displs.resize(mpi_nranks);
@@ -529,6 +571,7 @@ int main(int argc, char* const argv[])
     }
     all.resize(total);
   }
+
   MPI_Gatherv(found.data(), mycount * (int) sizeof(BN), MPI_BYTE,
               all.data(), mpi_rank == 0 ? bytecounts.data() : nullptr,
               mpi_rank == 0 ? displs.data() : nullptr, MPI_BYTE, 0,
@@ -543,9 +586,13 @@ int main(int argc, char* const argv[])
     for (const BN& f : all) {
       record_factor(f);
       bn_to_mpz(f, p);
-      while (mpz_divisible_p(cof, p)) mpz_divexact(cof, cof, p);
+      while (mpz_divisible_p(cof, p))
+        mpz_divexact(cof, cof, p);
     }
-    if (mpz_cmp_ui(cof, 1UL) > 0) factor_residual(cof);   // prime > sqrt(N), or incomplete table
+
+    if (mpz_cmp_ui(cof, 1UL) > 0)
+      factor_residual(cof);   // prime > sqrt(N), or incomplete table
+
     mpz_clear(cof);
     mpz_clear(p);
 
@@ -554,7 +601,8 @@ int main(int argc, char* const argv[])
 
     fprintf(stderr, "---------------------------------\n");
     fprintf(stderr, "Prime Factors of %s:", NS);
-    for (const BN& f : Factors) fprintf(stderr, " %s", bn_to_dec(f).c_str());
+    for (const BN& f : Factors)
+      fprintf(stderr, " %s", bn_to_dec(f).c_str());
     fprintf(stderr, "\n---------------------------------\n");
   }
 

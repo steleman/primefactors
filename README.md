@@ -208,8 +208,9 @@ This was tested on Fedora 41 and 44 with CUDA 12.9 and 13.2 respectively:
 
 ## Performance reality
 
-These programs demonstrate massively-parallel GPU factorization; they do **not** beat the CPU for
-hard inputs.
+These programs demonstrate massively-parallel GPU factorization; they do **not** beat the CPU for hard inputs.
+
+For integers smaller than `2^64 (ULLONG_MAX)` the GPU programs aren't worth it: they will be much slower than their GMP-ECM equivalent. This is due to the startup cost of initializing CUDA and MPI.
 
 - **Pollard's rho** gains only ~√k from k parallel walks and scales O(√factor), so it is
   throughput-oriented (many small factors / many numbers), not a hard-semiprime cracker. On the

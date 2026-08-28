@@ -47,6 +47,7 @@
 #include <vector>
 #include <algorithm>
 
+#include <unistd.h>
 #include <mpi.h>
 #include <cuda.h>
 #include <gmp.h>          // CGBN's host backend (cgbn_mpz.h) requires GMP
@@ -560,15 +561,42 @@ static bool mpi_rho(const BN& C, BN& factor) {
   return false;
 }
 
+static void print_help() {
+  (void) std::fprintf(stderr, "Usage: cgbnprimefactors <unsigned-integer>\n");
+}
+
 int main(int argc, char* const argv[])
 {
   MPI_Init(&argc, (char***) &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_nranks);
 
-  if (argc != 3) {
+  if (argc != 2) {
     if (mpi_rank == 0)
-      fprintf(stderr, "Usage: cgbnprimefactors <bit-width> <unsigned-integer>\n");
+      print_help();
+
+    MPI_Finalize();
+    return 1;
+  }
+
+  bool ph = false;
+  int opt;
+
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+    case 'h':
+      ph = true;
+      break;
+    default:
+      ph = true;
+      break;
+    }
+  }
+
+  if (ph) {
+    if (mpi_rank == 0)
+      print_help();
+
     MPI_Finalize();
     return 1;
   }
@@ -576,7 +604,7 @@ int main(int argc, char* const argv[])
   // mpirun replicates argv to every rank, so each parses the input identically —
   // no broadcast needed. Trial division below is likewise deterministic, so all
   // ranks reach the GPU stage with the same working value and factor list.
-  const char* NS = argv[2];
+  const char* NS = argv[1];
   BN N = bn_from_dec(NS);
 
   // Cap below MAXBITS so the widest rho_step's "+c" cannot overflow the width.

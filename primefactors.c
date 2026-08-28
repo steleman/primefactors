@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <gmp.h>
 #include <ecm.h>
 
@@ -344,15 +345,40 @@ void print_factors(const char* N) {
   (void) fprintf(stderr, "\n---------------------------------\n");
 }
 
+static void print_help(void) {
+  (void) fprintf(stderr, "Usage: primefactors -b <bit-width> <unsigned-integer>\n");
+}
+
 int main(int argc, char* const argv[])
 {
-  if (argc != 3) {
-    (void) fprintf(stderr, "Usage: prime_factors <bit-width> <unsigned-integer>\n");
+  if (argc != 4) {
+    print_help();
     return 1;
   }
 
-  Bits = (uint32_t) strtoul(argv[1], NULL, 10);
-  const char* NS = argv[2];
+  bool ph = false;
+  int opt;
+
+  while ((opt = getopt(argc, argv, "hb:")) != -1) {
+    switch (opt) {
+    case 'h':
+      ph = true;
+      break;
+    case 'b':
+      Bits = (uint32_t) strtoul(argv[2], NULL, 10);
+      break;
+    default:
+      ph = true;
+      break;
+    }
+  }
+
+  if (ph) {
+    print_help();
+    return 1;
+  }
+
+  const char* NS = argv[3];
 
   // Initial size (at least a small floor so the growth logic is well-defined).
   FactorSize = Bits ? Bits : 8UL;
