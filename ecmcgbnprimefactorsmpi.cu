@@ -415,12 +415,15 @@ static void factor_residual(const mpz_t n) {
 
 static void print_help() {
   (void) std::fprintf(stderr,
-                      "Usage: ecmcgbnprimefactorsmpi -f <input-file> "
-                      "-N <unsigned-integer-to-factorize>\n"
+                      "Usage: ecmcgbnprimefactorsmpi -f <primes-input-file>\n"
                       "                             "
                       "[-t <number-of-threads>]\n"
                       "                             "
-                      "[(default: sysconf(_SC_NPROCESSORS_ONLN) - 1)]\n");
+                      "(default: sysconf(_SC_NPROCESSORS_ONLN) - 1)\n"
+                      "                             "
+                      "<number-to-factorize> (base 10)\n"
+                      "                             "
+                      "(must be last argument)\n");
 }
 
 int main(int argc, char* const argv[])
@@ -435,7 +438,7 @@ int main(int argc, char* const argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_nranks);
 
-  while ((opt = getopt(argc, argv, "hf:t:N:")) != -1) {
+  while ((opt = getopt(argc, argv, "hf:t:")) != -1) {
     switch (opt) {
       case 'h':
         ph = true;
@@ -445,9 +448,6 @@ int main(int argc, char* const argv[])
         break;
       case 't':
         nthreads = (int32_t) strtol(optarg, NULL, 10);
-        break;
-      case 'N':
-        NS = optarg;
         break;
       default:
         ph = true;
@@ -462,6 +462,16 @@ int main(int argc, char* const argv[])
     MPI_Finalize();
     return 0;
   }
+
+  if (argc != 6 || argc != 4) {
+    if (mpi_rank == 0)
+      print_help();
+
+    MPI_Finalize();
+    return 1;
+  }
+
+  NS = argv[argc - 1];
 
   if (!filename || !NS) {
     if (mpi_rank == 0)
