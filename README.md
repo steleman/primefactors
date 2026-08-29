@@ -45,9 +45,9 @@ Measured wall-clock on a 32-core box (semiprime = two equal-size primes): a 30-d
 
 ```
 %>> gmake
-%>> ./primefactors <bit-width> <unsigned-integer>
+%>> ./primefactors -b <bit-width> <unsigned-integer>
 # e.g.
-%>> ./primefactors 128 600851475143
+%>> ./primefactors -b 128 600851475143
 ```
 
 `<bit-width>` is an allocation *hint* (initial `mpz_init2` size and factor-array capacity); GMP
@@ -88,13 +88,10 @@ collapses to the plain serial search.
 
 ```
 %>> gmake cgbnprimefactors
-%>> mpirun -np <ranks> ./cgbnprimefactors <bit-width> <unsigned-integer>
+%>> mpirun -np <ranks> ./cgbnprimefactors <unsigned-integer>
 # e.g.
-%>> ./cgbnprimefactors 128 8539734222673769370568987281911
+%>> ./cgbnprimefactors 8539734222673769370568987281911
 ```
-
-The `<bit-width>` argument is accepted for CLI parity with the CPU program but is ignored — the
-width is chosen automatically per cofactor.
 
 ---
 
@@ -124,9 +121,9 @@ Miller-Rabin tested, to decide whether ECM should try to split it — the file p
 
 ```
 %>> gmake ecmcgbnprimefactorsmpi
-%>> mpirun -np <ranks> ./ecmcgbnprimefactorsmpi <primes-file> <N> [threads-per-rank]
+%>> mpirun -np <ranks> ./ecmcgbnprimefactorsmpi -f <primes-file> -t <threads-per-rank> <number-to-factorize>
 # e.g.  (primes.txt = whitespace/newline-separated decimal primes)
-%>> mpirun -np 4 ./ecmcgbnprimefactorsmpi primes.txt 100718234543 8
+%>> mpirun -np 4 ./ecmcgbnprimefactorsmpi -f primes.txt -t 8 100718234543
 ```
 
 `[threads-per-rank]` defaults to the number of online CPUs. With one rank it scans the whole
